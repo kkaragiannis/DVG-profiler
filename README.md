@@ -1,7 +1,7 @@
-[![DVG profiler]][dvgp_git-repo-url]
+# DVG profiler
 ___
 
-# Description
+### Description
 The defective viral genomes (DVG) profiler is a post sequence alignment processing algorithm that creates the
 best discontinuous alignments of each read. The algorithm is relying on the fact that sensitive Smith
 Waterman alignment is performed and that all the possible hits of each short read are returned. DVG
