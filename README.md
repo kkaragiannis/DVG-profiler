@@ -29,4 +29,4 @@ HIVE installation instructions can be found [here][hive_readme].
    [hive_logo]: <https://raw.githubusercontent.com/FDA/fda-hive/master/doc/images/hive_logo.png>
    [hive_git-repo-url]: <https://github.com/FDA/fda-hive>
    [hh_logo]: <https://raw.githubusercontent.com/kkaragiannis/hexahedron/master/doc/images/hexahedron_logo.png>
-   [dvg_git-repo-url]: <https://github.com/kkaragiannis/DVG-profiler>
+   [dvgp_git-repo-url]: <https://github.com/kkaragiannis/DVG-profiler>
