@@ -1198,7 +1198,7 @@ idx sViosam::vioaltIteratorFunction(sBioal * bioal, sBioal::ParamsAlignmentItera
     idx samflags = 0; // Set the default to forward alignment with no other flags
 
     // If it is backwards, add hex 0x10
-    if( hdr->isBackwardComplement()){
+    if( hdr->isReverseComplement()){
         samflags |= eSamRevComp;
     }
 

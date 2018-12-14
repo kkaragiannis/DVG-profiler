@@ -1540,7 +1540,7 @@ struct rangeGraphNode {
     {
         return (next->parentClID == current->clID && next->start==start) || (next->clID == current->mergeclID && current->end==start);
     }
-    bool isBackwardConnection(sBioseqpopul::cloneSummary * current, sBioseqpopul::cloneSummary * previous)
+    bool isReverseConnection(sBioseqpopul::cloneSummary * current, sBioseqpopul::cloneSummary * previous)
     {
         return (previous->clID == current->parentClID && current->start==end) || (previous->mergeclID == current->clID && previous->end==end);
     }
@@ -1548,7 +1548,7 @@ struct rangeGraphNode {
     {
         return (next->parentClID == current->clID ) || (next->clID == current->mergeclID );
     }
-    bool isBackwardRelated(sBioseqpopul::cloneSummary * current, sBioseqpopul::cloneSummary * previous)
+    bool isReverseRelated(sBioseqpopul::cloneSummary * current, sBioseqpopul::cloneSummary * previous)
     {
         return (previous->clID == current->parentClID ) || (previous->mergeclID == current->clID );
     }
@@ -1559,7 +1559,7 @@ struct rangeGraphNode {
             sBioseqpopul::cloneSummary * ic = &cls[i].iCl;
             if ( forward && isForwardConnection(cc,ic) )
                 return true;
-            else if ( !forward && isBackwardConnection(cc,ic) )
+            else if ( !forward && isReverseConnection(cc,ic) )
                 return true;
         }
         return false;
@@ -1570,7 +1570,7 @@ struct rangeGraphNode {
         bool unconnected = true, unrelated = true;
         for(idx i = 0 ; i < cls.dim() ; ++i) {
             ic = &cls[i].iCl;
-            if( ( cls[i].iCl.clID == cc->clID ) || (forward && isForwardConnection(cc,ic) ) || ( !forward && isBackwardConnection(cc,ic) ) ) {
+            if( ( cls[i].iCl.clID == cc->clID ) || (forward && isForwardConnection(cc,ic) ) || ( !forward && isReverseConnection(cc,ic) ) ) {
                 unconnected =false;
                 if( cls[i].fr > minF ) {
                     if( sAbs(fr - cls[i].fr) < minFrDistance ) {
@@ -1585,7 +1585,7 @@ struct rangeGraphNode {
             for(idx i = 0 ; i < cls.dim() ; ++i) {
 //                bool zerod = false;
                 ic = &cls[i].iCl;
-                if( ( cls[i].iCl.clID == cc->clID ) || (forward && isForwardRelated(cc,ic) ) || ( !forward && isBackwardRelated(cc,ic) ) ) {
+                if( ( cls[i].iCl.clID == cc->clID ) || (forward && isForwardRelated(cc,ic) ) || ( !forward && isReverseRelated(cc,ic) ) ) {
                     unrelated =false;
                     if( cls[i].fr > minF ) {
                         if( sAbs(fr - cls[i].fr) < minFrDistance ) {

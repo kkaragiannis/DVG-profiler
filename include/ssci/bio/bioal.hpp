@@ -211,7 +211,7 @@ class sBioal
         };
 
         typedef idx (*typeCallbackIteratorFunction)(sBioal * bioal, ParamsAlignmentIterator * param, sBioseqAlignment::Al * hdr, idx * m, idx iNum, idx iAlInd);
-        idx iterateAlignments(idx * iVis, idx start, idx cnt, idx iSub, typeCallbackIteratorFunction callbackFunc, ParamsAlignmentIterator * callbackParam=0, typeCallbackIteratorFunction secondaryCallbackFunc = 0, ParamsAlignmentIterator * secondaryCallbackParam = 0, idx * sortArr = 0);
+        idx iterateAlignments(idx * iVis, idx start, idx cnt, idx iSub, typeCallbackIteratorFunction callbackFunc, ParamsAlignmentIterator * callbackParam=0, typeCallbackIteratorFunction secondaryCallbackFunc = 0, ParamsAlignmentIterator * secondaryCallbackParam = 0, sVec<idx> * sortArr = 0);
         idx getConsensus(sStr &out,idx wrap = 0, idx mode = 0);
 
         //char * printAlignmentSummaryBySubject(sVec < idx >  & statistics, sStr * str, bool reportZeroHits=false);

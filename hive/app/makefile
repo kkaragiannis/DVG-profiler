@@ -44,7 +44,7 @@ DIST_LIST = \
     dna-profx dna-qc dna-clust algo-annotMapper \
     dna-hiveseq \
     svc-batcher generic-launcher dna-multi-qc \
-    dna-insilico \
+    dna-insilico dna-diprofiler \
     dna-differential-profiler
 
 # MOVE!! your app from BUILD_LIST to DIST_LIST when it is ready to be deployed, DO NOT COPY!

@@ -794,14 +794,20 @@ idx DnaCGI::Cmd(const char * cmd)
 
         if(!lupos)return 1;
 
+        bool printAlignments = pForm->boolvalue("alignments",false);
+
         cr_path.cut0cut();
         obj.getFilePathname00(cr_path, "_.vec" __);
-        sVec<idx> allreads(sMex::fReadonly,cr_path.ptr());
+        sVec<idx> t_allreads(sMex::fReadonly,cr_path.ptr());
+        sVec<idx> allreads;
+        for(idx i = 0 ; i < lupos->size ; i += printAlignments?1:2) {
+            allreads.vadd(1,t_allreads[i+lupos->pos]);
+        }
         if( !allreads.dim() ) {
             error("read container is missing");
             outHtml();
             return 1;
-        }
+        }        
 
         bool isFastq = pForm->boolvalue("fastq",false);
         sStr defaultFileName;
@@ -815,7 +821,7 @@ idx DnaCGI::Cmd(const char * cmd)
         sBioal::ParamsAlignmentIterator par(&out);
         if( isFastq )
             par.navigatorFlags |= sBioal::alPrintQualities;
-        bioal->iterateAlignments(0, 0, lupos->size, -2, sBioal::printFastXSingle, &par,0,0,allreads.ptr(lupos->pos));
+        bioal->iterateAlignments(0, 0, lupos->size, -2, sBioal::printFastXSingle, &par,0,0,&allreads);
         outBinData(out.ptr(0), out.length());
     }
 

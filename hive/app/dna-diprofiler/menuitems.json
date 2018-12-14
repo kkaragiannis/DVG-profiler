@@ -1,0 +1,23 @@
+{
+	"3160169": {
+		"_id": "$upsert()",
+		"_type": "menuitem",
+		"description": "To to detect defective interfering particles and generally junctions of discontinuous alignments",
+		"order": 4,
+		"url": "?cmd=dna-diprofiler",
+		"title": "Defective Viral Genomes Detection",
+		"path": "/Portal/Post-Alignment/Defective_Viral_Genomes_Detection",
+		"_perm": [
+			{
+				"party": "/everyone/users/",
+				"act": {
+					"browse": true,
+					"read": true
+				},
+				"_infect": {
+					"party": [ "member"	]
+				}
+			}
+		]
+	}
+}

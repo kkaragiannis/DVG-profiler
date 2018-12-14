@@ -1,0 +1,149 @@
+{
+    "type.323": {
+        "_id": "type.323",
+        "_type": "type",
+        "name": "svc-diprofiler",
+        "title": "DI Profiler",
+        "description": "Defective Interfering particles Profiling Engine",
+        "parent": {
+            "1": "type.331"
+        },
+        "prefetch": true,
+        "fields": {
+            "1.1": {
+                "field_name": "maxNonOverlap",
+                "field_title": "Maximum distance",
+                "field_type": "integer",
+                "field_parent": "overlap",
+                "field_order": 2,
+                "field_default_value": "50",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.2": {
+                "field_name": "maxOverlap",
+                "field_title": "Maximum overlap",
+                "field_type": "integer",
+                "field_parent": "overlap",
+                "field_order": 3,
+                "field_default_value": "5",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.3": {
+                "field_name": "minPeakCov",
+                "field_title": "Minimum depth of coverage",
+                "field_type": "integer",
+                "field_order": 3.5,
+                "field_default_value": "2",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.4": {
+                "field_name": "minReadCov",
+                "field_title": "Minimum length of aligned read",
+                "field_type": "integer",
+                "field_order": 4,
+                "field_default_value": "70",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.5": {
+                "field_name": "minSubCov",
+                "field_title": "Minimum length of aligned subject",
+                "field_type": "integer",
+                "field_order": 5,
+                "field_default_value": "20",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.6": {
+                "field_name": "multiScore",
+                "field_title": "Treat multiple alignemnt combinations",
+                "field_type": "integer",
+                "field_order": 6,
+                "field_default_value": "1",
+                "field_constraint": "choice",
+                "field_constraint_data": "0///Keep all|1///Keep combination with best score|2///Keep combination with highest read coverage",
+                "field_description": "For alignments with overlapping region that exceeds the overlap thresholds. If the combined score is better that individual scores in the overlapping region by the percetage specified then the junction is considered valid "
+            },
+            "1.7": {
+                "field_name": "overlap",
+                "field_title": "Distance of aligned parts",
+                "field_type": "list",
+                "field_order": 1
+            },
+            "1.8": {
+                "field_name": "overlapScoreFilter",
+                "field_title": "Overlap score threshold(%)",
+                "field_type": "real",
+                "field_order": 0,
+                "field_default_value": "0",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0 && $_(val) <= 100"
+            },
+            "1.9": {
+                "field_name": "peakDetectionWidth",
+                "field_title": "Group width",
+                "field_type": "integer",
+                "field_order": 5.5,
+                "field_default_value": "5",
+                "field_constraint": "eval",
+                "field_constraint_data": "$_(val) >= 0"
+            },
+            "1.10": {
+                "field_name": "alignmentID",
+                "field_title": "Alignment(s)",
+                "field_type": "obj",
+                "field_is_multi_fg": true,
+                "field_is_batch_fg": true,
+                "field_constraint": "type",
+                "field_constraint_data": "svc-align-pairwise+"
+            },
+            "1.12": {
+                "field_name": "print_construct_info",
+                "field_title": "Print construct details",
+                "field_type": "bool",
+                "field_default_value": "1",
+                "field_description": "Include type DVG (3' copyback, 5' copyback, insertion or deletion), length of construct and length of jump",
+                "field_is_optional_fg": true
+            },
+            "1.13": {
+                "field_name": "is_genome_antisense",
+                "field_title": "Is genome antisense",
+                "field_type": "bool",
+                "field_default_value": "0",
+                "field_description": "Is the sense or antisense strand of the genome provided?",
+                "field_is_optional_fg": true
+            }
+        },
+        "_perm": [
+            {
+                "party": "/system/",
+                "act": {
+                    "browse": true,
+                    "read": true,
+                    "write": true,
+                    "exec": true,
+                    "del": true,
+                    "admin": true,
+                    "share": true,
+                    "download": true
+                },
+                "_infect": {
+                    "party": [ "member" ]
+                }
+            },
+            {
+                "party": "/everyone/",
+                "act": {
+                    "browse": true,
+                    "read": true
+                },
+                "_infect": {
+                    "party": [ "member" ]
+                }
+            }
+        ]
+    }
+}

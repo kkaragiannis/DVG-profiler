@@ -40,7 +40,21 @@ class QPSvcDnaHexagon: public sQPSvc
 
         QPSvcDnaHexagon(sQPride& qp): TParent(qp){}
         virtual ~QPSvcDnaHexagon(){}
-
+        static const char * getQuery00(sUsrObj & obj, sStr & query, const char * alSeparator = 0) {
+            if(!alSeparator)alSeparator=";";
+            idx pos = query.length();
+            if( obj.propGet00("query",&query,alSeparator) ) {
+                query.shrink00();
+                query.add(alSeparator,sLen(alSeparator));
+                if(!obj.propGet00("query_paired",&query,alSeparator))
+                    query.shrink00(alSeparator,2);
+            }
+            return query.ptr(pos);
+        }
+        static const char * getSubject00(sUsrObj & obj, sStr & subject, const char * alSeparator = 0){
+            if(!alSeparator)alSeparator=";";
+            return obj.propGet00("subject", &subject, alSeparator);
+        }
         virtual const char* getSvcName() const
         {
             return "dna-hexagon";

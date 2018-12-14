@@ -255,7 +255,7 @@ idx isPrimeFilter( sBioal::ParamsAlignmentIterator * callbackParam )
     return false;
 }
 
-idx sBioal::iterateAlignments(idx * piVis, idx start, idx cnt, idx iSub, typeCallbackIteratorFunction callbackFunc, ParamsAlignmentIterator * callbackParam /*= 0*/, typeCallbackIteratorFunction secondaryCallbackFunc /*= 0*/, ParamsAlignmentIterator * secondaryCallbackParam /*= 0*/, idx * sortArr /*= 0*/ )
+idx sBioal::iterateAlignments(idx * piVis, idx start, idx cnt, idx iSub, typeCallbackIteratorFunction callbackFunc, ParamsAlignmentIterator * callbackParam /*= 0*/, typeCallbackIteratorFunction secondaryCallbackFunc /*= 0*/, ParamsAlignmentIterator * secondaryCallbackParam /*= 0*/, sVec<idx> * sortArr /*= 0*/ )
 {
     //idx * alList=0;
     idx alListIndex=0;
@@ -301,13 +301,15 @@ idx sBioal::iterateAlignments(idx * piVis, idx start, idx cnt, idx iSub, typeCal
     }
     if(!secondaryFilters && cnt!=sIdxMax)++cnt;
 
-    idx * randInds=sortArr;
+    idx * randInds=0;
     sVec<idx> randIndArr;
 
-    idx iAlStart2End = iAlEnd - iAlStart;
-    if( !randInds && !(callbackParam->navigatorFlags & alPrintMultiple) && ((callbackParam->navigatorFlags & (alPrintInRandom)) || !(callbackParam->navigatorFlags & alPrintCollapseRpt)) ) {
+    if(sortArr) {
+        randInds = sortArr->ptr();
+        iAlEnd = iAlStart + sortArr->dim();
+    } else if( !randInds && !(callbackParam->navigatorFlags & alPrintMultiple) && ((callbackParam->navigatorFlags & (alPrintInRandom)) || !(callbackParam->navigatorFlags & alPrintCollapseRpt)) ) {
         idx t_ia = 0, t_rpts = 0, i_add = 0;
-        randIndArr.resize(iAlStart2End);
+        randIndArr.resize(iAlEnd - iAlStart);
         for(; iAlStart < iAlEnd; ++iAlStart) {
             t_ia = alListIndex ? alListIndex + iAlStart - 1 : iAlStart;
             sBioseqAlignment::Al * hdr = getAl(t_ia);
@@ -336,8 +338,7 @@ idx sBioal::iterateAlignments(idx * piVis, idx start, idx cnt, idx iSub, typeCal
             iAlStart=0;iAlEnd=randIndArr.dim();
         }
     }
-    idx ia=iAlStart;
-    iAlEnd = iAlStart + randIndArr.dim();
+    idx ia=iAlStart, iAlStart2End = iAlEnd - iAlStart;
     for (idx iAlCnt = 0 ; ia<iAlEnd; ++ia, ++iAlCnt) {
         idx iAl=0;
         if(randInds){
@@ -391,7 +392,7 @@ idx sBioal::iterateAlignments(idx * piVis, idx start, idx cnt, idx iSub, typeCal
             if((callbackParam->navigatorFlags&alPrintTouchingOnly) && callbackParam->High >= 0 && (alStart>callbackParam->High || alEnd<callbackParam->High))
                 isok=false;
             if( !(callbackParam->navigatorFlags&sBioal::alPrintForward) != !(callbackParam->navigatorFlags&sBioal::alPrintReverse) ){
-                if( ( (callbackParam->navigatorFlags&sBioal::alPrintForward) && hdr->isBackwardComplement() ) || ((callbackParam->navigatorFlags&sBioal::alPrintReverse) && hdr->isForward()) ){
+                if( ( (callbackParam->navigatorFlags&sBioal::alPrintForward) && hdr->isReverseComplement() ) || ((callbackParam->navigatorFlags&sBioal::alPrintReverse) && hdr->isForward()) ){
                     isok=false;
                 }
             }
@@ -899,7 +900,7 @@ idx sBioal::printFastXSingle(sBioal * bioal, ParamsAlignmentIterator * params, s
     }
 
     return bioal->Qry->printFastXRow(params->str, (params->navigatorFlags&alPrintQualities), iq, 0, 0, 0, true, false,
-        papID, 0, al->isBackwardComplement()?3:0, (params->navigatorFlags&alPrintNs), 0, (params->navigatorFlags & alPrintCollapseRpt), false);
+        papID, 0, al->isReverseComplement()?3:0, (params->navigatorFlags&alPrintNs), 0, (params->navigatorFlags & alPrintCollapseRpt), false);
 }
 
 #define isSameBase(baseS,baseQ) (baseS!='N'&&baseQ!='N'&&baseS==baseQ)

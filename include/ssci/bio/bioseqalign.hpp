@@ -33,6 +33,8 @@
 
 #include <ssci/bio/bioseq.hpp>
 #include <ssci/bio/bioseqhash.hpp>
+#include <slib/core/iter.hpp>
+#include <slib/core/heap.hpp>
 
 namespace slib
 {
@@ -130,14 +132,28 @@ namespace slib
             inline idx flags() {return (flscore&0xFFFFFFFF);}//!< Returns the flgags associated with this alignment.
             /*! \return Score associated with this alignment. */
             inline idx score() {return (flscore>>32)&(0xFFFFFFFF);}//!< Returns the score associated with this alignment.
+            /*! \return true if alignment is compressed. */
+            inline idx isCompressed() {return flags()&fAlignCompressed;}
             /*! \return true if Forward (nonComplement)*/
             inline idx isForward() {idx fl = flags(); return (fl&fAlignForward) && !(fl&fAlignForwardComplement);}
             /*! \return true if Forward Complement */
             inline idx isForwardComplement() {idx fl = flags(); return (fl&fAlignForward) && (fl&fAlignForwardComplement);}
             /*! \return true if Backward (nonComplement)*/
-            inline idx isBackward() {idx fl = flags(); return (fl&fAlignBackward) && !(fl&fAlignBackwardComplement);}
+            inline idx isReverse() {idx fl = flags(); return (fl&fAlignBackward) && !(fl&fAlignBackwardComplement);}
             /*! \return true if Backward Complement*/
-            inline idx isBackwardComplement() {idx fl = flags(); return (fl&fAlignBackward) && (fl&fAlignBackwardComplement);}
+            inline idx isReverseComplement() {idx fl = flags(); return (fl&fAlignBackward) && (fl&fAlignBackwardComplement);}
+            /*! \return true if Complement (forward or reverse)*/
+            inline idx isComplement() {idx fl = flags(); return (fl&fAlignForwardComplement) || (fl&fAlignBackwardComplement);}
+            /*! \return true if alignment has no gaps*/
+            inline idx hasNoGaps() {return !dimAlign() || (isCompressed()?(dimAlign()==3):dimAlign()==(lenAlign()*2));}
+            /*! \return true if alignment has no gaps and no overhangs*/
+            inline bool isPerfect(idx readlen) {return hasNoGaps() && lenAlign()==readlen;}
+            /*! \return true if alignment has either left or right overhang*/
+            inline bool hasOverhang(idx * m, idx readlen) {return hasLeftOverhang(m) || hasRightOverhang(m,readlen);}
+            /*! \return true if alignment has left overhang*/
+            inline bool hasLeftOverhang(idx * m) {return m[1]>0;}
+            /*! \return true if alignment has right overhang*/
+            inline bool hasRightOverhang(idx * m, idx readlen) {return getQueryEnd(m) < readlen;}
 
             /*! \param val is the sequence ID.*/
             inline void setIdSub(idx val) {ids=(ids&0xFFFFFFFF00000000ull)|(val&(0xFFFFFFFF));} //!< Set the subject (reference) sequence ID.
@@ -360,8 +376,212 @@ namespace slib
 
         static idx prepareMultipleAlignmentSrc(sStr * tempStr, const char * src, idx len,  bool  withIdlines);
     };
+    
+    class sBioseqAlIter: public sIter<sBioseqAlignment::Al * const, sBioseqAlIter>
+    {
+        protected:
+            sBioseqAlignment::Al *_alstart, *_alend, * _alrec;
+            idx _i;
+            bool _valid;
 
+            inline bool isEof() const { return _alstart == 0 || _alrec == 0 || _alrec >= _alend; }
+
+            void nextRec() {
+                if( unlikely(isEof()) ) {
+                    _valid = false;
+                } else {
+                    _valid = true;
+                    _alrec = sShift(_alrec, _alrec->sizeofFlat() );
+                    if( unlikely(isEof()) ) {
+                        _valid = false;
+                    }
+                }
+            }
+
+            void init(const char * buf, const char * bufend)
+            {
+                _alrec = _alstart = static_cast<sBioseqAlignment::Al *>((void*)buf);
+                _alend = static_cast<sBioseqAlignment::Al *>((void*)(!buf ? NULL : bufend ? bufend : buf + strlen(buf)));
+                _i = 0;
+                _valid = false;
+                if( !isEof() ) {
+                    _valid = true;
+                }
+            }
+
+
+        public:
+            inline void requestData_impl() {}
+            inline void releaseData_impl() {}
+            inline bool readyData_impl() const { return true; }
+            inline bool validData_impl() const { return _valid; }
+            inline idx pos_impl() const { return _i; }
+            inline idx segmentPos_impl() const { return 0; }
+
+            inline void reset( const sBioseqAlIter &rhs ) {
+                _alrec = rhs._alrec;
+                _i = rhs._i;
+                _valid = rhs._valid;
+            }
+
+            sBioseqAlIter(const char *buf = NULL, const char *bufend = NULL) { init(buf, bufend); }
+            sBioseqAlIter(const sFil *f) { init(f->ptr(), f->last()); }
+            sBioseqAlIter(const sFil &f) { init(f.ptr(), f.last()); }
+
+            sBioseqAlIter(const sBioseqAlIter &rhs) : _alstart(rhs._alstart), _alend(rhs._alend) { reset(rhs); }
+
+//            sBioseqAlIter& operator=(const sBioseqAlIter &rhs) { reset(rhs); return *this; }
+
+            inline sBioseqAlIter* clone_impl() const { return new sBioseqAlIter(*this); }
+            inline sBioseqAlIter& operator++()
+            {
+                ++_i;
+                nextRec();
+                return *this;
+            }
+
+            inline sBioseqAlignment::Al * const dereference_impl() const { return _alrec; }
+    };
+
+    struct isAlLessThanOrEqual {
+        inline bool operator()( sBioseqAlignment::Al * x, sBioseqAlignment::Al * y ) const {
+            return x->idQry() == y->idQry() ? (x->idSub() <= y->idSub()) : (x->idQry() <= y->idQry());
+        }
+    };
+
+    template<class Tcmp = isAlLessThanOrEqual>
+    class sBioseqAlBundleIter : public sIter<sBioseqAlignment::Al * const, sBioseqAlBundleIter<Tcmp> >
+    {
+        protected:
+            sVec<sBioseqAlIter> _iters;
+            sBioseqAlignment::Al * _val;
+            idx _i, _minIndex;
+            Tcmp tcmp;
+            sHeap<sBioseqAlignment::Al *, Tcmp> _heap;
+
+            void init( const sBioseqAlBundleIter &rhs )
+            {
+                if( rhs._iters.dim() ) {
+                    _iters.resize( rhs._iters.dim() );
+                    for( idx i = 0; i < rhs._iters.dim() ; ++i) {
+                        _iters[i] = rhs._iters[i];
+                    }
+                }
+
+                _val = rhs._val;
+                _i = rhs._i;
+                _minIndex = rhs._minIndex;
+                _heap.setCmp(&tcmp);
+                _heap.reset( rhs._heap );
+            }
+
+            void init(const sBioseqAlIter * iters, idx iters_cnt) {
+                _i = _minIndex = 0;
+                _heap.setCmp(&tcmp);
+
+                if(iters_cnt) {
+                    _iters.resize(iters_cnt);
+                    for( idx i = 0; i < iters_cnt ; ++i) {
+                        _iters[i] = iters[i];
+                        _heap.push(static_cast<sBioseqAlignment::Al *>(*iters[i]));
+                    }
+                    _minIndex = _heap.peekIndex();
+                }
+                getVal();
+            }
+
+            inline void getVal()
+            {
+                if( _heap.dim() ) {
+                    _val = *_iters[_minIndex];
+                }
+            }
+
+            inline void incrementMin()
+            {
+                if( _iters[_minIndex].valid() && _heap.dim() ) {
+                    if( (++_iters[_minIndex]).valid() ) {
+                        _heap.adjust(_minIndex,static_cast<sBioseqAlignment::Al *>(*_iters[_minIndex]));
+                    } else {
+                        _heap.remove(_minIndex);
+                    }
+                }
+                if( _heap.dim() ) {
+                    _minIndex = _heap.peekIndex();
+                }
+            }
+
+        public:
+
+            sBioseqAlBundleIter(const sBioseqAlIter * iters = 0, idx iters_cnt = 0) : _heap(NULL) { init(iters,iters_cnt); }
+            sBioseqAlBundleIter(const sVec<sBioseqAlIter> & iters) : _heap(NULL) { init(iters.ptr(),iters.dim()); }
+            sBioseqAlBundleIter(const sBioseqAlBundleIter &rhs) : _heap(NULL) { init(rhs); }
+
+            sBioseqAlBundleIter& operator=(const sBioseqAlBundleIter &rhs) { init(rhs); return *this; }
+
+            inline void reset( const sBioseqAlBundleIter &rhs ) {
+                if( rhs._iters.dim() ) {
+                    for( idx i = 0; i < rhs._iters.dim() ; ++i) {
+                        _iters[i].reset( rhs._iters[i] );
+                    }
+                }
+
+                _val = rhs._val;
+                _i = rhs._i;
+                _minIndex = rhs._minIndex;
+                _heap.reset( rhs._heap );
+            }
+
+            inline idx cnt() { return _i; }
+            inline void requestData_impl() {}
+            inline void releaseData_impl() {}
+            inline bool readyData_impl() const { return true; }
+            inline bool validData_impl() const { return _heap.dim(); }
+            inline sBioseqAlBundleIter& increment_impl()
+            {
+                incrementMin();
+                getVal();
+                ++_i;
+                return *this;
+            }
+
+            inline sBioseqAlignment::Al * const dereference_impl() const { return _val; }
+
+
+            static idx getIters(sFil & f, sVec<sBioseqAlIter> & iters) { return getIters(&f, iters);}
+            static idx getIters(sFil * f, sVec<sBioseqAlIter> & iters) {
+                sBioseqAlIter it(f);
+                if( !it.valid() )
+                    return 0;
+
+                sBioseqAlignment::Al *prv = *it, *hdr = *it, *f_hdr = *it, *s_hdr = 0;
+                idx ii=0;
+                for(; it.valid(); ++it) {
+                    ++ii;
+                    hdr = *it;
+                    if( prv->idQry() > hdr->idQry() ) {
+                        if( !s_hdr ) {
+                            s_hdr = f_hdr;
+                        }
+                        *iters.add() = sBioseqAlIter((const char *)s_hdr,(const char *)hdr);
+                        s_hdr = hdr;
+                    }
+                    prv = hdr;
+                }
+                if( s_hdr != hdr ) {
+                    if( !s_hdr )
+                        s_hdr = f_hdr;
+                    *iters.add() = sBioseqAlIter((const char *) s_hdr, f->last());
+                }
+
+                return iters.dim();
+            }
+    };
+
+    typedef sBioseqAlBundleIter<> sBioseqAlBundleAscIter;
 } // namespace 
+
+
 
 #endif // sBio_seqalign_hpp
 

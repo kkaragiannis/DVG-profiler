@@ -31,7 +31,11 @@
 #include <slib/utils/heatmap.hpp>
 #include <xlib/image.hpp>
 
+#ifdef HAS_IMAGEMAGICK7
+#include <MagickWand/MagickWand.h>
+#else
 #include <wand/MagickWand.h>
+#endif
 
 #include <errno.h>
 #include <time.h>
@@ -225,7 +229,11 @@ sImage * sImage::resize(const char* pic_dst, udx width, udx height, EAspect keep
                 } else if( keepAspect == eAspectHeight ) {
                     width = m_width * height / m_height;
                 }
+#ifdef HAS_IMAGEMAGICK7
+                rc = MagickResizeImage(wand, width, height, LanczosFilter);
+#else
                 rc = MagickResizeImage(wand, width, height, LanczosFilter, 1);
+#endif
                 if( rc == MagickTrue ) {
                     rc = MagickWriteImage(wand, pic_dst);
                     if( rc == MagickTrue ) {

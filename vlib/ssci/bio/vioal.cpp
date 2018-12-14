@@ -67,14 +67,14 @@ bool sVioal::filterPair(ALFact * _i1, ALFact * _i2, sBioseqAlignment::Al *_hdr1,
             return true;
     }
     if( (params.flags&sBioseqAlignment::fAlignKeepPairDirectionality) ) {
-        if ( !(_hdr1->isForward())!=!(_hdr2->isBackwardComplement() ) || !(_hdr1->isBackwardComplement())!=!(_hdr2->isForward()) ) { /*logical X0R*/
+        if ( !(_hdr1->isForward())!=!(_hdr2->isReverseComplement() ) || !(_hdr1->isReverseComplement())!=!(_hdr2->isForward()) ) { /*logical X0R*/
             return true;
         }
     }
     idx fragmentLength = 0, abs = 1;
     if( params.maxFragmentLength || params.minFragmentLength ) {
 
-        if ( !(_hdr1->isForward())!=!(_hdr2->isBackwardComplement() ) || !(_hdr1->isBackwardComplement())!=!(_hdr2->isForward()) ) { /*logical X0R*/
+        if ( !(_hdr1->isForward())!=!(_hdr2->isReverseComplement() ) || !(_hdr1->isReverseComplement())!=!(_hdr2->isForward()) ) { /*logical X0R*/
             return true;
         } else {
             if( _hdr1->isForward() ) {                                   //  1------------               2---------------(2+lenAlign)
